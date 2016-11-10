@@ -1,0 +1,22 @@
+{
+  "name": "fable-import-reactredux-opinionated",
+  "version": "0.1.0",
+  "description": "Fable bindings (opinionated) for react-redux",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/wastaz/fable-import-reactredux-opinionated.git"
+  },
+  "keywords": [
+    "F#",
+    "Fable",
+    "react-redux",
+    "react",
+    "redux"
+  ],
+  "author": "Fredrik Forssen",
+  "license": "ISC"
+}
