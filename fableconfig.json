@@ -1,0 +1,13 @@
+{
+  "projFile": "src/Fable.Import.ReactRedux.Opinionated.fsproj",
+  "outDir": "npm",
+  "dll": true,
+  "sourceMaps": true,
+  "targets": {
+    "umd": {
+      "dll": false,
+      "outDir": "npm/umd",
+      "module": "umd"
+    }
+  }
+}
