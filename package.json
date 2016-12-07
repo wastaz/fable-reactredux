@@ -4,7 +4,7 @@
   "description": "Fable bindings (opinionated) for react-redux",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "build": "node build"
   },
   "repository": {
     "type": "git",
@@ -18,5 +18,12 @@
     "redux"
   ],
   "author": "Fredrik Forssen",
-  "license": "ISC"
+  "license": "MIT",
+  "devDependencies": {
+    "fable-compiler": "0.7.22",
+    "fable-core":  "0.7.15",
+    "fs-extra": "^1.0.0",
+    "fable-import-redux": "0.1.2",
+    "fable-react": "0.7.12"
+  }
 }
