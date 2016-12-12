@@ -7,12 +7,12 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>fcfb0718-20ce-43c3-b374-2478441c5929</ProjectGuid>
     <OutputType>Library</OutputType>
-    <RootNamespace>Fable.Import.ReactRedux.Opinionated</RootNamespace>
-    <AssemblyName>Fable.Import.ReactRedux.Opinionated</AssemblyName>
+    <RootNamespace>Fable.ReactRedux</RootNamespace>
+    <AssemblyName>Fable.ReactRedux</AssemblyName>
     <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>Fable.Import.ReactRedux.Opinionated</Name>
+    <Name>Fable.ReactRedux</Name>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -22,7 +22,7 @@
     <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Debug\Fable.Import.ReactRedux.Opinionated.XML</DocumentationFile>
+    <DocumentationFile>bin\Debug\Fable.ReactRedux.XML</DocumentationFile>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,14 +31,14 @@
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>3</WarningLevel>
-    <DocumentationFile>bin\Release\Fable.Import.ReactRedux.Opinionated.XML</DocumentationFile>
+    <DocumentationFile>bin\Release\Fable.ReactRedux.XML</DocumentationFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="Fable.Core">
       <HintPath>..\node_modules\fable-core\Fable.Core.dll</HintPath>
     </Reference>
-    <Reference Include="Fable.Import.Redux">
-      <HintPath>..\node_modules\fable-import-redux\Fable.Import.Redux.dll</HintPath>
+    <Reference Include="Fable.Redux">
+      <HintPath>..\node_modules\fable-redux\Fable.Redux.dll</HintPath>
     </Reference>
     <Reference Include="Fable.React">
       <HintPath>..\node_modules\fable-react\Fable.React.dll</HintPath>

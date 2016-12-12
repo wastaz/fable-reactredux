@@ -1,5 +1,5 @@
 {
-  "projFile": "src/Fable.Import.ReactRedux.Opinionated.fsproj",
+  "projFile": "src/Fable.ReactRedux.fsproj",
   "outDir": "npm",
   "dll": true,
   "sourceMaps": true,
