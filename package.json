@@ -1,14 +1,14 @@
 {
-  "name": "fable-import-reactredux-opinionated",
-  "version": "0.1.0",
-  "description": "Fable bindings (opinionated) for react-redux",
+  "name": "fable-reactredux",
+  "version": "0.1.2",
+  "description": "Fable bindings and helpers for react-redux",
   "main": "index.js",
   "scripts": {
     "build": "node build"
   },
   "repository": {
     "type": "git",
-    "url": "git://github.com/wastaz/fable-import-reactredux-opinionated.git"
+    "url": "git://github.com/wastaz/fable-reactredux.git"
   },
   "keywords": [
     "F#",
@@ -23,7 +23,7 @@
     "fable-compiler": "0.7.22",
     "fable-core":  "0.7.15",
     "fs-extra": "^1.0.0",
-    "fable-import-redux": "0.1.2",
+    "fable-redux": "0.2.0",
     "fable-react": "0.7.12"
   }
 }
