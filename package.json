@@ -21,9 +21,12 @@
   "license": "MIT",
   "devDependencies": {
     "fable-compiler": "0.7.22",
-    "fable-core":  "0.7.15",
+    "fable-core": "0.7.15",
     "fs-extra": "^1.0.0",
     "fable-redux": "0.2.0",
     "fable-react": "0.7.12"
+  },
+  "dependencies": {
+    "shallowequal": "^0.2.2"
   }
 }

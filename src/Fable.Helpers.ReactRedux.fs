@@ -5,17 +5,53 @@ open Fable.Import
 open Fable.Core.JsInterop
 
 [<PassGenerics>]
-let private convertAndWrap<'a> (fn : ('a -> (string * obj) list)) =
-    let f = System.Func<_, _> (fun x -> x |> fn |> createObj) 
+let private convertAndWrapWithProps<'a, 'b> (fn : ('a -> 'b -> 'b)) =
+    let f = System.Func<_, _, _> (fun x y -> fn x y ) 
     f |> box |> Some
+
+
+type Inner<'TState, 'TProps> = {
+    propsCreator : ('TProps -> 'TProps) option
+    stateMapper : ('TState -> 'TProps -> 'TProps) option
+    dispatchMapper : (ReactRedux.Dispatcher -> 'TProps -> 'TProps) option
+}
+
+let [<Import("default", "shallowequal")>] private shallowequal : (obj * obj) -> bool = jsNative
 
 [<PassGenerics>]
-let private convertAndWrapWithProps<'a, 'b> (fn : ('a -> 'b -> (string * obj) list)) =
-    let f = System.Func<_, _, _> (fun x y -> 
-        fn x y 
-        |> createObj) 
-    f |> box |> Some
+let private selectorFactory<'S, 'P> (dispatch : ReactRedux.Dispatcher) (cfg : Inner<'S, 'P>) : ReactRedux.Selector<'S, 'P> =
+    let mutable result : 'P = createEmpty
+    let stateMapper =
+        match cfg.stateMapper with
+        | Some(sm) -> sm
+        | None -> fun _ p -> p
+    let dispatchMapper =
+        match cfg.dispatchMapper with
+        | Some(dm) -> dm
+        | None -> fun _ p -> p
+    ReactRedux.Selector<'S, 'P>(fun (nextState : 'S) (nextOwnprops : 'P) ->
+        let nextResult =
+            nextOwnprops
+            |> dispatchMapper dispatch
+            |> stateMapper nextState
+        
+        if shallowequal(result, nextResult) then
+            result
+        else 
+            result <- nextResult
+            nextResult)
+            
+[<Fable.Core.Erase>]
+type ConnectorBuilder<'TState, 'TProps> =
+    | Connector of Inner<'TState, 'TProps>
 
+[<PassGenerics>]
+let private createReduxConnector (cb : ConnectorBuilder<'TState, 'TProps>) =
+    match cb with
+    | Connector(inner) ->
+        ReactReduxImport.connectAdvanced(System.Func<_, _, _>(selectorFactory), inner)
+
+(*
 let private createReduxConnector (statemapper : obj option) (dispatchmapper : obj option) =
     match statemapper, dispatchmapper with
     | Some(s), Some(d) -> 
@@ -26,80 +62,78 @@ let private createReduxConnector (statemapper : obj option) (dispatchmapper : ob
         ReactReduxImport.connect(s)
     | None, None -> 
         failwith "No mapper provided!"
+*)
 
-type private Inner<'TState, 'TProps> = 
-    ('TState -> (string * obj) list) option *
-    ('TState -> 'TProps -> (string * obj) list) option *
-    (ReactRedux.Dispatcher -> (string * obj) list) option *
-    (ReactRedux.Dispatcher -> 'TProps -> (string * obj) list) option
-
-[<Fable.Core.Erase>]
-type ConnectorBuilder<'TState, 'TProps> =
-    | Connector of Inner<'TState, 'TProps>
         
 let createConnector () =
-    ConnectorBuilder.Connector(None, None, None, None)
+    ConnectorBuilder.Connector({ propsCreator = None; stateMapper = None; dispatchMapper = None })
 
-let withStateMapper (sm : ('S -> (string * obj) list)) (c : ConnectorBuilder<'S, 'P>) =
+let withProps (defaultPropsCreator : 'P -> 'P) (c : ConnectorBuilder<'S, 'P>) =
     match c with
-    | Connector(_, _, dm, dmp) -> ConnectorBuilder.Connector(Some sm, None, dm, dmp)
+    | Connector(inner) -> ConnectorBuilder.Connector({ inner with propsCreator = Some defaultPropsCreator })
 
-let withStateMapperWithProps (smp : ('S -> 'P -> (string * obj) list)) (c : ConnectorBuilder<'S, 'P>) =
+let withStateMapper (smp : ('S -> 'P -> 'P)) (c : ConnectorBuilder<'S, 'P>) =
     match c with
-    | Connector(_, _, dm, dmp) -> ConnectorBuilder.Connector(None, Some smp, dm, dmp)
+    | Connector(inner) -> ConnectorBuilder.Connector({ inner with stateMapper = Some smp })
 
-let withDispatchMapper (dm : (ReactRedux.Dispatcher -> (string * obj) list)) (c : ConnectorBuilder<'S, 'P>) =
+let withDispatchMapper (dmp : (ReactRedux.Dispatcher -> 'P -> 'P)) (c : ConnectorBuilder<'S, 'P>) =
     match c with
-    | Connector(sm, smp, _, _) -> ConnectorBuilder.Connector(sm, smp, Some dm, None)
-
-let withDispatchMapperWithProps (dmp : (ReactRedux.Dispatcher -> 'P -> (string * obj) list)) (c : ConnectorBuilder<'S, 'P>) =
-    match c with
-    | Connector(sm, smp, _, _) -> ConnectorBuilder.Connector(sm, smp, None, Some dmp)
-
-let private appendChildren
-        (props : 'TProps)
-        (children : Fable.Import.React.ReactElement list)
-        (cmp : React.ComponentClass<'TProps>) =
-    React.from cmp props children
+    | Connector(inner) -> ConnectorBuilder.Connector({ inner with dispatchMapper = Some dmp })
 
 [<PassGenerics>]
 let private getMappers<'TState, 'TProps> (c : ConnectorBuilder<'TState, 'TProps>) = 
     let inner = c |> unbox<Inner<'TState, 'TProps>>
-    let stateMapper =
-        match inner with
-        | None, None, _, _ -> None
-        | Some(sm), None, _, _ -> convertAndWrap sm
-        | _, Some(smp), _, _ -> convertAndWrapWithProps smp
-    let dispatchMapper =
-        match inner with
-        | _, _, None, None -> None
-        | _, _, Some(dm), None -> convertAndWrap dm
-        | _, _, _, Some(dmp) -> convertAndWrapWithProps dmp
+    let stateMapper = inner.stateMapper |> Option.bind convertAndWrapWithProps
+    let dispatchMapper = inner.dispatchMapper |> Option.bind convertAndWrapWithProps
     stateMapper, dispatchMapper
 
 [<PassGenerics>]
+let private getProps<'TState, 'TProps> (c : ConnectorBuilder<'TState, 'TProps>) = 
+    match c with
+    | Connector(inner) -> inner.propsCreator
+    
+let [<Import("createElement", "react")>] private createElement
+    (``type``: #React.ComponentClass<'P>) : React.ReactElement = jsNative
+
+let [<Import("createElement", "react")>] private createElementWithProps
+    (``type``: #React.ComponentClass<'P>) (props : 'P) : React.ReactElement = jsNative
+
+
+type ElementFactory = unit -> React.ReactElement
+
+let private toElementFactory p cc =
+    match p with
+    | Some(props) ->
+        fun () -> createElementWithProps cc props
+    | None ->
+        fun () -> createElementWithProps cc createEmpty
+
+[<PassGenerics>]
 let buildComponent<'TComponent, 'TProps, 'TCtx, 'TState when 'TComponent :> React.Component<'TProps, 'TCtx>> 
-    (props : 'TProps) 
-    (children : Fable.Import.React.ReactElement list)
     (c : ConnectorBuilder<'TState, 'TProps>) = 
         let stateMapper, dispatchMapper = getMappers<'TState, 'TProps> c
-        createReduxConnector stateMapper dispatchMapper
+        let props = 
+            getProps c
+            |> Option.map (fun propsFn -> createEmpty |> unbox<'TProps> |> propsFn)
+        createReduxConnector c
         |> fun cr -> cr$(U2.Case1(unbox typeof<'TComponent>)) 
         |> unbox<React.ComponentClass<'TProps>>
-        |> appendChildren props children
+        |> toElementFactory props
 
 [<PassGenerics>]
 let buildFunction<'TProps, 'TState> 
     (fn : ('TProps -> React.ReactElement))
-    (props : 'TProps) 
-    (children : Fable.Import.React.ReactElement list)
     (c : ConnectorBuilder<'TState, 'TProps>) = 
         let stateMapper, dispatchMapper = getMappers<'TState, 'TProps> c
-        createReduxConnector stateMapper dispatchMapper
+        let props = 
+            getProps c
+            |> Option.map (fun propsFn -> createEmpty |> unbox<'TProps> |> propsFn)
+        createReduxConnector c
         |> fun cr -> cr$(fn)
         |> unbox<React.ComponentClass<'TProps>>
-        |> appendChildren props children
+        |> toElementFactory props
 
 [<PassGenerics>]
 let createProvider<'TStore when 'TStore :> Redux.IUntypedStore> (store : 'TStore)  (app : React.ReactElement) =
     Fable.Helpers.React.com<ReactRedux.Provider<_, _>, _, _> (createObj [ "store" ==> store ]) [ app ]
+
