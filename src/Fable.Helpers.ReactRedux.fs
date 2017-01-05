@@ -10,7 +10,7 @@ let private convertAndWrapWithProps<'a, 'b> (fn : ('a -> 'b -> 'b)) =
     f |> box |> Some
 
 
-type Inner<'TState, 'TProps> = {
+type private Inner<'TState, 'TProps> = {
     propsCreator : ('TProps -> 'TProps) option
     stateMapper : ('TState -> 'TProps -> 'TProps) option
     dispatchMapper : (ReactRedux.Dispatcher -> 'TProps -> 'TProps) option
@@ -43,6 +43,7 @@ let private selectorFactory<'S, 'P> (dispatch : ReactRedux.Dispatcher) (cfg : In
             
 [<Fable.Core.Erase>]
 type ConnectorBuilder<'TState, 'TProps> =
+    private
     | Connector of Inner<'TState, 'TProps>
 
 [<PassGenerics>]
@@ -51,20 +52,6 @@ let private createReduxConnector (cb : ConnectorBuilder<'TState, 'TProps>) =
     | Connector(inner) ->
         ReactReduxImport.connectAdvanced(System.Func<_, _, _>(selectorFactory), inner)
 
-(*
-let private createReduxConnector (statemapper : obj option) (dispatchmapper : obj option) =
-    match statemapper, dispatchmapper with
-    | Some(s), Some(d) -> 
-        ReactReduxImport.connect(s, d)
-    | None, Some(d) -> 
-        ReactReduxImport.connect(None, d)
-    | Some(s), None -> 
-        ReactReduxImport.connect(s)
-    | None, None -> 
-        failwith "No mapper provided!"
-*)
-
-        
 let createConnector () =
     ConnectorBuilder.Connector({ propsCreator = None; stateMapper = None; dispatchMapper = None })
 
@@ -97,7 +84,6 @@ let [<Import("createElement", "react")>] private createElement
 
 let [<Import("createElement", "react")>] private createElementWithProps
     (``type``: #React.ComponentClass<'P>) (props : 'P) : React.ReactElement = jsNative
-
 
 type ElementFactory = unit -> React.ReactElement
 
